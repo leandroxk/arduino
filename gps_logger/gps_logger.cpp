@@ -4,20 +4,6 @@
 
 extern HardwareSerial Serial;
 
-extern int __bss_end;
-extern void *__brkval;
-
-int get_free_memory() {
-	int free_memory;
-
-	if ((int) __brkval == 0)
-		free_memory = ((int) &free_memory) - ((int) &__bss_end);
-	else
-		free_memory = ((int) &free_memory) - ((int) __brkval);
-
-	return free_memory;
-}
-
 const char* GPS_DIR = "GPS";
 
 void setup() {
@@ -81,6 +67,5 @@ void loop() {
 	gps_log.println(build_nmea_string());
 	gps_log.close();
 
-	Serial.println(get_free_memory());
 	delay(1000);
 }

@@ -4,38 +4,39 @@
 
 extern HardwareSerial Serial;
 
+extern int __bss_end;
+extern void *__brkval;
+
+int get_free_memory() {
+	int free_memory;
+
+	if ((int) __brkval == 0)
+		free_memory = ((int) &free_memory) - ((int) &__bss_end);
+	else
+		free_memory = ((int) &free_memory) - ((int) __brkval);
+
+	return free_memory;
+}
+
 const char* GPS_DIR = "GPS";
 
 void setup() {
-	 Serial.begin(9600);
-	 pinMode(10, OUTPUT);
+	Serial.begin(9600);
+	pinMode(10, OUTPUT);
 
-	 if (!SD.begin()) {
-		 Serial.println("SD Error!");
-		 return;
-	 }
+	if (!SD.begin()) {
+		Serial.println("SD Error!");
+		return;
+	}
 
-	 File gps_dir = SD.open(GPS_DIR);
-	 if (!gps_dir.available()) {
-		 SD.mkdir(const_cast<char*>(GPS_DIR));
-	 }
-	 gps_dir.close();
+	File gps_dir = SD.open(GPS_DIR);
+	if (!gps_dir.available()) {
+		SD.mkdir(const_cast<char*>(GPS_DIR));
+	}
+	gps_dir.close();
 }
 
-File open_gps_file() {
-	char path[strlen(GPS_DIR) + 14];
-	strcat(path, GPS_DIR);
-	strcat(path, "/");
-	strcat(path, "02112218.NMA");
-
-	return SD.open(path, FILE_WRITE);
-}
-
-int nmea_checksum(String text) {
-	int length = text.length() + 1;
-	char s[length];
-	text.toCharArray(s, length);
-
+int nmea_checksum(char *s) {
 	int c = 0;
 	while (*s) {
 		c ^= *s++;
@@ -44,36 +45,42 @@ int nmea_checksum(String text) {
 	return c;
 }
 
+String build_nmea_string() {
+	char text[90];
+	strcpy(text, "$GPRMC");
+	strcat(text, ",");
+	strcat(text, "092750.000");
+	strcat(text, ",");
+	strcat(text, "A");
+	strcat(text, "5321.6801");
+	strcat(text, ",");
+	strcat(text, "N");
+	strcat(text, ",");
+	strcat(text, "00630.3372");
+	strcat(text, ",");
+	strcat(text, "W");
+	strcat(text, ",");
+	strcat(text, "0.02");
+	strcat(text, ",");
+	strcat(text, "31.66");
+	strcat(text, ",");
+	strcat(text, "280511");
+	strcat(text, ",,,");
+	strcat(text, "A*");
+
+	String mnea = String(text);
+	mnea.concat(String(nmea_checksum(text)));
+
+	return mnea;
+}
+
+
 void loop() {
-	File gps_log = open_gps_file();
+	File gps_log = SD.open("teste", FILE_WRITE);
 
-	String text;
-	text.concat("$GPRMC");
-	text.concat(",");
-	text.concat("092750.000");
-	text.concat(",");
-	text.concat("A");
-	text.concat("5321.6802");
-	text.concat(",");
-	text.concat("N");
-	text.concat(",");
-	text.concat("00630.3372");
-	text.concat(",");
-	text.concat("W");
-	text.concat(",");
-	text.concat("0.02");
-	text.concat(",");
-	text.concat("31.66");
-	text.concat(",");
-	text.concat("280511");
-	text.concat(",,,");
-	text.concat("A*");
-	text.concat(nmea_checksum(text));
-
-	gps_log.println(text);
+	gps_log.println(build_nmea_string());
 	gps_log.close();
 
-	Serial.println(text);
-
+	Serial.println(get_free_memory());
 	delay(1000);
 }

@@ -88,5 +88,15 @@
 			<type>2</type>
 			<locationURI>ArduinoLibPath/SD</locationURI>
 		</link>
+		<link>
+			<name>SoftwareSerial</name>
+			<type>2</type>
+			<locationURI>ArduinoLibPath/SoftwareSerial</locationURI>
+		</link>
+		<link>
+			<name>TinyGPS</name>
+			<type>2</type>
+			<locationURI>PivateLibPath/TinyGPS</locationURI>
+		</link>
 	</linkedResources>
 </projectDescription>

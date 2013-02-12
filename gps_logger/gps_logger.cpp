@@ -4,7 +4,7 @@
 
 extern HardwareSerial Serial;
 
-const char* GPS_DIR = "GPS";
+const char* GPS_DIR = "/GPS";
 
 void setup() {
 	Serial.begin(9600);
@@ -31,8 +31,7 @@ int nmea_checksum(char *s) {
 	return c;
 }
 
-String build_nmea_string() {
-	char text[90];
+void build_nmea_string(char* text) {
 	strcpy(text, "$GPRMC");
 	strcat(text, ",");
 	strcat(text, "092750.000");
@@ -54,18 +53,30 @@ String build_nmea_string() {
 	strcat(text, ",,,");
 	strcat(text, "A*");
 
-	String mnea = String(text);
-	mnea.concat(String(nmea_checksum(text)));
-
-	return mnea;
+	int checksum = nmea_checksum(text);
+	char buf[sizeof(checksum) + 1];
+	itoa(checksum, buf, 10);
+	strcat(text, buf);
 }
 
+File get_log_file() {
+	char path[strlen(GPS_DIR) + 14];
+	strcpy(path, GPS_DIR);
+	strcat(path, "/");
+	strcat(path, "02121118.NMA");
+
+	return SD.open(path, FILE_WRITE);
+}
 
 void loop() {
-	File gps_log = SD.open("teste", FILE_WRITE);
+	File gps_log = get_log_file();
 
-	gps_log.println(build_nmea_string());
+	char mnea[90];
+	build_nmea_string(mnea);
+
+	gps_log.println(mnea);
 	gps_log.close();
+	Serial.println(mnea);
 
 	delay(1000);
 }

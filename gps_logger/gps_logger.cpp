@@ -31,6 +31,19 @@ File open_gps_file() {
 	return SD.open(path, FILE_WRITE);
 }
 
+int nmea_checksum(String text) {
+	int length = text.length() + 1;
+	char s[length];
+	text.toCharArray(s, length);
+
+	int c = 0;
+	while (*s) {
+		c ^= *s++;
+	}
+
+	return c;
+}
+
 void loop() {
 	File gps_log = open_gps_file();
 
@@ -54,10 +67,13 @@ void loop() {
 	text.concat(",");
 	text.concat("280511");
 	text.concat(",,,");
-	text.concat("A*43");
+	text.concat("A*");
+	text.concat(nmea_checksum(text));
 
 	gps_log.println(text);
 	gps_log.close();
+
+	Serial.println(text);
 
 	delay(1000);
 }
